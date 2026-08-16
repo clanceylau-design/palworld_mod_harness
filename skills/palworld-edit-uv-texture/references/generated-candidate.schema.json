@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Palworld 生成候选",
+  "type": "object",
+  "required": ["schemaVersion", "artifactType", "gameBuildId", "target", "parentArtifacts", "candidateDirectory", "editedTexture", "passthroughTextures", "structureStatus", "previewStatus"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactType": { "const": "GeneratedCandidate" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "gameBuildId": { "type": "string", "minLength": 1 },
+    "target": { "type": "object" },
+    "parentArtifacts": { "type": "object" },
+    "candidateDirectory": { "type": "string", "minLength": 1 },
+    "editedTexture": {
+      "type": "object",
+      "required": ["path", "sha256", "source", "sourceSha256", "width", "height", "structureWeight", "luminanceCorrelation", "alphaExact"]
+    },
+    "passthroughTextures": { "type": "array", "items": { "type": "object" } },
+    "structureStatus": { "enum": ["pass", "fail"] },
+    "previewStatus": { "enum": ["pending", "pass", "fail"] }
+  },
+  "additionalProperties": false
+}

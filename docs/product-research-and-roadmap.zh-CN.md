@@ -1,7 +1,11 @@
 # Palworld AI Mod 创作平台：调研结论与实施规划
 
-> 文档日期：2026-08-14  
-> 状态：产品与技术预研  
+> 初始调研日期：2026-08-14
+>
+> 执行进度复核日期：2026-08-16
+>
+> 状态：产品与技术预研；实际执行状态以 [当前进度与断点续作手册](current-status-and-handoff.zh-CN.md) 为准
+>
 > 核心方向：纯 AI 完成游戏内模型/纹理生成与替换
 
 ## 1. 背景与产品假设
@@ -20,7 +24,7 @@
 自然语言创意
 → 结构化需求
 → 生成视觉候选
-→ AI 生成/修改模型与纹理
+→ 按任务类型先定模型或直接编辑纹理
 → 游戏资产适配
 → 自动构建与测试
 → 可安装 Mod
@@ -278,7 +282,7 @@ FModel 更适合离线索引，不适合每个用户任务实时由 Agent 操作
 - 风格一致性；
 - 内容审核。
 
-必须先让用户确认低成本二维预览，再进入昂贵 3D 阶段。
+必须先让用户确认低成本二维概念方向，再进入昂贵 3D 阶段。若需求会改变轮廓或增加几何体，概念图只用于确定方向；最终纹理必须在模型、材质槽与 UV 定稿后生成。
 
 ### 5.4 3D Generation Gateway
 
@@ -607,7 +611,41 @@ Retry Cost
 6. 在 Phase 0 就加入来源记录、版权治理和 AI 标签；
 7. 以成功交付率、端到端时间和单次成本作为核心评价，而非只评价生成模型的视觉惊艳程度。
 
-## 12. 参考资料
+## 12. 两轮 ChickenPal 验证结论（2026-08-16）
+
+### 12.1 已验证事实
+
+第一轮证明了原 UV 纹理编辑链路可用：源纹理合同、尺寸、Alpha、通道、Blender 原模型/骨架绑定预览以及 Texture2D Pak 注入都能被确定性验证。
+
+第二轮证明了受限模型定制的局部能力：在不修改骨架层级的前提下，可以锐化翅膀与头冠区域，并增加绑定到已有骨骼的刚性装甲附件；PSK 可重新导入 Blender 并完成多角度预览。
+
+同时暴露出一个关键顺序错误：机械纹理先于新装甲几何生成。原身体的拓扑和 UV 虽然仍有效，但 4 个新附件最初各自占满 0–1 UV 空间，彼此重叠，因而此前通过 21/21 二维检查的纹理只能算机械风格概念参考，不能算匹配最终模型的纹理。
+
+### 12.2 修正后的任务路由
+
+```text
+纯换色/图案
+→ 原 UV 纹理生成 → 2D 校验 → 原模型预览 → Texture Pak
+
+仅变形且 UV 不变
+→ 模型定稿 → 骨架/拓扑/UV 哈希校验 → 纹理生成 → Blender 预览
+
+新增附件或拓扑
+→ 模型 Blockout → 骨架绑定 → 几何定稿
+→ 身体保留原 UV + 附件独立 Atlas
+→ 烘焙几何引导图 → 分材质生成纹理
+→ Blender 预览 → UE 5.1.1 Reimport/Cook → Pak → 运行时回归
+```
+
+### 12.3 本轮新增产物与边界
+
+已为 ChickenPal 的 4 块机械装甲建立 1024×1024、2×2 分区的独立 atlas，验证每个附件占用唯一 UV 单元且原身体 UV 不变；已输出 UV Coverage 与 Material-ID 引导图，并冻结 `ModelSurfaceContract`。随后以该合同生成机械装甲 Base Color，强制回写尺寸与 Coverage 遮罩，并在冻结模型上完成身体、眼睛、装甲材质绑定及四视图 Blender 预览。
+
+当前新增装甲 Base Color 已是 `model_matched_attachment_base_color`，并已生成低模 AO、自烘焙切线 Normal、Pointiness 曲率近似、MRAO 和橙色 Emissive Mask；PBR 节点绑定与 Blender 四视图验证通过。UV 定稿后的最终 PSK 也已完成导出—回导验证，5074 顶点、8652 面、39 个骨骼/Socket、3 个材质槽和 4 个附件 UV 均往返一致。
+
+已生成 UE 5.1.1 导入 Bundle，固定目标 SkeletalMesh、原 Skeleton、Physics Asset、材质槽、纹理压缩与 MRAO 通道合同。当前仍未完成高低模细节烘焙、UE 5.1.1 SkeletalMesh Reimport/Cook、动画与 Physics Asset 游戏内回归；直接阻塞是本机尚未配置 UE 5.1.1 Editor。因此整体状态为 `Blender model-matched PBR preview + finalized PSK ready`，不能标记为可部署模型 Mod。
+
+## 13. 参考资料
 
 - [Palworld Modding Docs：3D Asset Swapping](https://pwmodding.wiki/docs/developers/3d-modeling/asset-swapping/Home)
 - [Palworld Modding Docs：Exporting & Modifying 3D Assets](https://pwmodding.wiki/docs/developers/3d-modeling/asset-swapping/ExportingModifying3DAssets)

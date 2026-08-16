@@ -1,0 +1,4 @@
+interface:
+  display_name: "Palworld 视觉 Mod"
+  short_description: "构建并验证本地 Palworld 视觉替换 Mod"
+  default_prompt: "使用 $palworld-create-visual-mod 定位目标 Pal，生成或定制模型与纹理，在原骨架上预览，并打包当前支持的输出。"

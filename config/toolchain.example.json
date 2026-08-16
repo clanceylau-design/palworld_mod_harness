@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "game": {
+    "appid": "1623730",
+    "root": "F:\\SteamLibrary\\steamapps\\common\\Palworld",
+    "manifest": "F:\\SteamLibrary\\steamapps\\appmanifest_1623730.acf"
+  },
+  "tools": {
+    "repak": "D:\\PalworldModHarnessTools\\repak\\repak.exe",
+    "fmodel": "D:\\PalworldModHarnessTools\\FModel\\FModel.exe",
+    "blender": "D:\\PalworldModHarnessTools\\BlenderPortable\\blender-4.2.16-windows-x64\\blender.exe",
+    "blenderUserRoot": "D:\\PalworldModHarnessTools\\BlenderUser",
+    "pskPsaAddonSource": "D:\\PalworldModHarnessTools\\blender-addons",
+    "ue4ssRoot": "F:\\SteamLibrary\\steamapps\\common\\Palworld\\Pal\\Binaries\\Win64\\ue4ss",
+    "unrealEditor": null,
+    "mappingFile": "D:\\PalworldModHarnessTools\\mappings\\build-<steam-build-id>\\<mapping-file>.usmap",
+    "dotnet": "D:\\PalworldModHarnessTools\\dotnet10\\dotnet.exe",
+    "palworldDataExtractor": "D:\\PalworldModHarnessTools\\sources\\PalworldDataExtractor\\Cli\\bin\\Release\\net10.0\\PalworldDataExtractor.dll",
+    "palworldAssetMetadata": "<repository>\\tools\\PalworldAssetMetadata\\bin\\Release\\net10.0\\PalworldAssetMetadata.dll",
+    "palworldTextureExport": "<repository>\\tools\\PalworldTextureExport\\bin\\Release\\net10.0\\PalworldTextureExport.dll",
+    "palworldMeshExport": "<repository>\\tools\\PalworldMeshExport\\bin\\Release\\net10.0\\PalworldMeshExport.dll",
+    "ue4DdsPython": "D:\\PalworldModHarnessTools\\UE4-DDS-Tools-v0.6.1\\python\\python.exe",
+    "ue4DdsMain": "D:\\PalworldModHarnessTools\\UE4-DDS-Tools-v0.6.1\\src\\main.py",
+    "cue4ParsePackage": "1.2.2.202608"
+  },
+  "registry": {
+    "palAssetRoot": "Pal/Content/Pal/Model/Character/Monster"
+  }
+}

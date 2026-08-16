@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Palworld 纹理候选验证报告",
+  "type": "object",
+  "required": ["schemaVersion", "artifactType", "gameBuildId", "validationScope", "status", "parentArtifacts", "target", "candidateDirectory", "candidates", "summary", "checks"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactType": { "const": "ValidationReport" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "gameBuildId": { "type": "string", "minLength": 1 },
+    "validationScope": { "const": "texture_candidate" },
+    "status": { "enum": ["pass", "fail"] },
+    "parentArtifacts": { "type": "object" },
+    "target": { "type": "object" },
+    "candidateDirectory": { "type": "string", "minLength": 1 },
+    "candidates": { "type": "array", "items": { "type": "object" } },
+    "summary": {
+      "type": "object",
+      "required": ["checkCount", "passed", "failed"],
+      "properties": {
+        "checkCount": { "type": "integer", "minimum": 0 },
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "status", "message"],
+        "properties": {
+          "name": { "type": "string" },
+          "status": { "enum": ["pass", "fail"] },
+          "message": { "type": "string" },
+          "details": { "type": "object" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

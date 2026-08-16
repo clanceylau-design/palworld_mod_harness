@@ -1,0 +1,27 @@
+# Python 与测试缓存
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# .NET 与 IDE 构建产物
+bin/
+obj/
+.vs/
+
+# 本机路径和私有工具配置
+config/toolchain.local.json
+
+# 游戏提取资产、生成资产、预览与打包结果
+artifacts/
+*.uasset
+*.uexp
+*.ubulk
+*.psk
+*.psa
+*.blend
+*.blend1
+*.pak
+
+# 本地下载和临时目录
+tmp/
+downloads/

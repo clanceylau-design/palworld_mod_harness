@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "sourceTools": [
+    {
+      "name": "dotnet-sdk",
+      "version": "10.0.302",
+      "installer": "https://dot.net/v1/dotnet-install.ps1",
+      "destination": "dotnet10"
+    },
+    {
+      "name": "PalworldDataExtractor",
+      "repository": "https://github.com/PalworldDataTools/PalworldDataExtractor.git",
+      "commit": "342d072157f2f15470f27a9e4d6a55490e6c190e",
+      "patch": "palworld-data-extractor-usmap-v4.patch",
+      "cue4ParsePackage": "1.2.2.202608"
+    }
+  ],
+  "packages": [
+    {
+      "name": "repak",
+      "version": "0.2.3",
+      "url": "https://github.com/trumank/repak/releases/download/v0.2.3/repak_cli-x86_64-pc-windows-msvc.zip",
+      "archive": "repak_cli-x86_64-pc-windows-msvc.zip",
+      "sha256": "6720d602144d75df477a99d5bedb6ea780997546afc335901d4937cafeaa73fa",
+      "destination": "repak"
+    },
+    {
+      "name": "fmodel",
+      "version": "4.4.4+7c86ee47",
+      "url": "https://github.com/4sval/FModel/releases/download/aug-2026/FModel.zip",
+      "archive": "FModel.zip",
+      "sha256": "ce1995fbc876cd0d0f54d3f7af5babc0e949d87fe4c4f2fada55c6e1e062eacc",
+      "destination": "FModel"
+    },
+    {
+      "name": "blender",
+      "version": "4.2.16-lts",
+      "url": "https://download.blender.org/release/Blender4.2/blender-4.2.16-windows-x64.zip",
+      "archive": "blender-4.2.16-windows-x64.zip",
+      "sha256": "7e74af493035b818a9f84f252fb8f7cf4c8e49d228144871336b202a7d20f89c",
+      "destination": "BlenderPortable"
+    },
+    {
+      "name": "io-scene-psk-psa",
+      "version": "7.1.0",
+      "url": "https://github.com/DarklightGames/io_scene_psk_psa/releases/download/7.1.0/add-on-io-scene-psk-psa-v7.1.0.zip",
+      "archive": "add-on-io-scene-psk-psa-v7.1.0.zip",
+      "sha256": "9902af8abe9995bfda04c0c8d4532f3b7a9984f6d43678bf37961d632a11e9c5",
+      "destination": "blender-addons"
+    },
+    {
+      "name": "ue4-dds-tools",
+      "version": "0.6.1",
+      "url": "https://github.com/matyalatte/UE4-DDS-Tools/releases/download/v0.6.1/UE4-DDS-Tools-v0.6.1-Batch.zip",
+      "archive": "UE4-DDS-Tools-v0.6.1-Batch.zip",
+      "sha256": "b33dc9ba2697eca16a6ccab4bea82648a43027e4a5b671cd4bfbb6f74c12043e",
+      "destination": "UE4-DDS-Tools-v0.6.1"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Palworld 纹理生成任务",
+  "type": "object",
+  "required": ["schemaVersion", "artifactType", "gameBuildId", "target", "request", "backendPolicy", "parentArtifacts", "task", "promptSpec", "conditioning"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactType": { "const": "TextureGenerationJob" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "gameBuildId": { "type": "string", "minLength": 1 },
+    "target": { "type": "object" },
+    "request": { "type": "object", "required": ["raw", "slotSelector"] },
+    "backendPolicy": { "type": "object" },
+    "parentArtifacts": { "type": "object" },
+    "task": {
+      "type": "object",
+      "required": ["source", "sourceSha256", "outputFilename", "width", "height", "bindings"]
+    },
+    "promptSpec": { "type": "object", "required": ["assetType", "primaryRequest", "preserve", "avoid"] },
+    "conditioning": { "type": "object", "required": ["sourceStructureWeight", "preserveSourceAlpha", "resample"] }
+  },
+  "additionalProperties": false
+}

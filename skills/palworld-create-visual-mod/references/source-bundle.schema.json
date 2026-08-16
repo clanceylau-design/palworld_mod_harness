@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/palworld/source-bundle.schema.json",
+  "title": "Palworld 视觉 Mod 源资产包",
+  "type": "object",
+  "required": ["schemaVersion", "artifactType", "gameBuildId", "target", "source", "files"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactType": { "const": "SourceBundle" },
+    "gameBuildId": { "type": "string", "minLength": 1 },
+    "target": {
+      "type": "object",
+      "required": ["palId", "primarySkeletalMesh", "skeleton", "physicsAsset"],
+      "properties": {
+        "palId": { "type": "string", "minLength": 1 },
+        "primarySkeletalMesh": { "type": "string" },
+        "skeleton": { "type": "string" },
+        "physicsAsset": { "type": "string" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["registry", "registrySha256", "mapping", "mappingSha256"]
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["requestedPath", "output", "sha256", "width", "height", "pixelFormat", "bindings"],
+        "properties": {
+          "requestedPath": { "type": "string" },
+          "output": { "type": "string" },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "width": { "type": "integer", "minimum": 1 },
+          "height": { "type": "integer", "minimum": 1 },
+          "pixelFormat": { "type": "string" },
+          "bindings": { "type": "array", "minItems": 1 }
+        }
+      }
+    }
+  }
+}

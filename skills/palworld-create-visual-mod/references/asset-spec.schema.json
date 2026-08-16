@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Palworld 视觉 Mod 资产规格",
+  "type": "object",
+  "required": ["schemaVersion", "artifactType", "gameBuildId", "request", "constraints", "fallbackOrder", "contentSha256"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactType": { "const": "AssetSpec" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "gameBuildId": { "type": "string", "minLength": 1 },
+    "request": {
+      "type": "object",
+      "required": ["raw", "targetQuery", "replacementMode", "modeRationale"],
+      "properties": {
+        "raw": { "type": "string", "minLength": 1 },
+        "targetQuery": { "type": "string", "minLength": 1 },
+        "replacementMode": { "enum": ["texture_only", "constrained_mesh", "same_skeleton_mesh"] },
+        "modeRationale": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "constraints": { "type": "object" },
+    "fallbackOrder": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "contentSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  },
+  "additionalProperties": false
+}

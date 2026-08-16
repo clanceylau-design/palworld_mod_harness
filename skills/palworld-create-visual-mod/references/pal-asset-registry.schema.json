@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/palworld/pal-asset-registry.schema.json",
+  "title": "Palworld Pal 资产 Registry",
+  "type": "object",
+  "required": ["schemaVersion", "game", "platform", "gameBuildId", "source", "scan", "pals"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "game": { "const": "Palworld" },
+    "platform": { "const": "Windows-Steam" },
+    "gameBuildId": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "object",
+      "required": ["pak", "pakEntryCount", "pakIndexSha256"],
+      "properties": {
+        "pak": { "type": "string" },
+        "pakEntryCount": { "type": "integer", "minimum": 1 },
+        "pakIndexSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "scan": { "type": "object" },
+    "pals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["palId", "assetRoot", "capabilities", "warnings"],
+        "properties": {
+          "palId": { "type": "string", "minLength": 1 },
+          "aliases": { "type": "array", "items": { "type": "string" } },
+          "localizedNames": { "type": "object", "additionalProperties": { "type": "string" } },
+          "assetRoot": { "type": "string" },
+          "primarySkeletalMesh": { "type": ["string", "null"] },
+          "skeleton": { "type": ["string", "null"] },
+          "physicsAsset": { "type": ["string", "null"] },
+          "gameplayMetadata": {
+            "type": ["object", "null"],
+            "properties": {
+              "match": { "enum": ["direct", "inherited-visual-variant"] },
+              "tribeName": { "type": "string" },
+              "basePalId": { "type": "string" },
+              "variantCount": { "type": "integer", "minimum": 1 },
+              "characterRows": { "type": "array", "items": { "type": "object" } }
+            }
+          },
+          "deepMetadata": { "type": ["object", "null"] },
+          "materialMetadata": { "type": ["object", "null"] },
+          "capabilities": { "type": "object" },
+          "warnings": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

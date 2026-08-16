@@ -1,0 +1,136 @@
+diff --git a/Abstractions/Abstractions.csproj b/Abstractions/Abstractions.csproj
+index b83de03..d8f65c5 100644
+--- a/Abstractions/Abstractions.csproj
++++ b/Abstractions/Abstractions.csproj
+@@ -1,7 +1,7 @@
+ ﻿<Project Sdk="Microsoft.NET.Sdk">
+ 
+     <PropertyGroup>
+-        <TargetFramework>net8.0</TargetFramework>
++        <TargetFramework>net10.0</TargetFramework>
+         <ImplicitUsings>enable</ImplicitUsings>
+         <Nullable>enable</Nullable>
+         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+diff --git a/Cli/Cli.csproj b/Cli/Cli.csproj
+index 569d073..60678e0 100644
+--- a/Cli/Cli.csproj
++++ b/Cli/Cli.csproj
+@@ -2,7 +2,7 @@
+ 
+     <PropertyGroup>
+         <OutputType>Exe</OutputType>
+-        <TargetFramework>net8.0</TargetFramework>
++        <TargetFramework>net10.0</TargetFramework>
+         <ImplicitUsings>enable</ImplicitUsings>
+         <Nullable>enable</Nullable>
+         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+diff --git a/Lib/DataExtractor.cs b/Lib/DataExtractor.cs
+index ef08f76..553430a 100644
+--- a/Lib/DataExtractor.cs
++++ b/Lib/DataExtractor.cs
+@@ -1,6 +1,7 @@
+ ﻿using CUE4Parse.FileProvider;
+ using CUE4Parse.FileProvider.Vfs;
+ using CUE4Parse.MappingsProvider;
++using CUE4Parse.MappingsProvider.Usmap;
+ using CUE4Parse.UE4.VirtualFileSystem;
+ using PalworldDataExtractor.Abstractions;
+ using PalworldDataExtractor.Abstractions.Breeding;
+@@ -81,7 +82,11 @@ public class DataExtractor : IDisposable
+ 
+     static DefaultFileProvider Create(string pakFileDirectory, DataExtractorConfiguration configuration)
+     {
+-        DefaultFileProvider provider = new(pakFileDirectory, SearchOption.AllDirectories, false, configuration.UnrealEngineVersion);
++        DefaultFileProvider provider = new(
++            pakFileDirectory,
++            SearchOption.AllDirectories,
++            configuration.UnrealEngineVersion,
++            StringComparer.OrdinalIgnoreCase);
+ 
+         if (configuration.MappingsFilePath != null)
+         {
+@@ -96,7 +101,7 @@ public class DataExtractor : IDisposable
+             throw new InvalidOperationException($"Could not find pak file {configuration.PakFileName} in directory {pakFileDirectory}");
+         }
+ 
+-        file.MountTo((FileProviderDictionary)provider.Files, false);
++        file.MountTo((FileProviderDictionary)provider.Files, provider.PathComparer);
+ 
+         return provider;
+     }
+diff --git a/Lib/Extractors/LocalizationFilesExtractor.cs b/Lib/Extractors/LocalizationFilesExtractor.cs
+index 7517ab5..1635570 100644
+--- a/Lib/Extractors/LocalizationFilesExtractor.cs
++++ b/Lib/Extractors/LocalizationFilesExtractor.cs
+@@ -20,7 +20,10 @@ public class LocalizationFilesExtractor
+     public async Task<Dictionary<string, LocalizationFile>> ExtractLocalizationFilesAsync()
+     {
+         const string l10NFilesRoot = "Pal/Content/L10N/";
+-        string[] l10NFiles = _provider.Files.Where(kv => kv.Key.StartsWith(l10NFilesRoot) && kv.Key.EndsWith(".uasset"))
++        string[] l10NFiles = _provider.Files.Where(kv =>
++                kv.Key.StartsWith(l10NFilesRoot) &&
++                kv.Key.Contains("/Pal/DataTable/Text/") &&
++                kv.Key.EndsWith(".uasset"))
+             .Select(kv => kv.Key.SubstringAfter(l10NFilesRoot).SubstringBeforeLast(".uasset"))
+             .ToArray();
+         IEnumerable<IGrouping<string, string>> l10NFilesByRegion = l10NFiles.GroupBy(f => f.SubstringBefore("/"));
+diff --git a/Lib/Extractors/PalIconsExtractor.cs b/Lib/Extractors/PalIconsExtractor.cs
+index 1eff1a9..d5cb1a4 100644
+--- a/Lib/Extractors/PalIconsExtractor.cs
++++ b/Lib/Extractors/PalIconsExtractor.cs
+@@ -21,7 +21,7 @@ class PalIconsExtractor
+     {
+         const string palAssetFilePath = @"Pal\Content\Pal\DataTable\Character\DT_PalCharacterIconDataTable.DT_PalCharacterIconDataTable";
+ 
+-        UDataTable palTable = await _provider.LoadObjectAsync<UDataTable>(palAssetFilePath);
++        UDataTable palTable = await _provider.LoadPackageObjectAsync<UDataTable>(palAssetFilePath);
+ 
+         Dictionary<string, byte[]> dictionary = new();
+         foreach (KeyValuePair<FName, FStructFallback> row in palTable.RowMap)
+@@ -35,6 +35,7 @@ class PalIconsExtractor
+     static byte[] GetIcon(FStructFallback props)
+     {
+         UTexture2D? texture = props.GetOrDefault<UTexture2D?>("Icon");
+-        return texture?.Decode()?.Encode(SKEncodedImageFormat.Png, 80).ToArray() ?? Array.Empty<byte>();
++        CTexture? decoded = texture?.Decode();
++        return decoded?.Encode(CUE4Parse_Conversion.Textures.ETextureFormat.Png, false, out _) ?? Array.Empty<byte>();
+     }
+ }
+diff --git a/Lib/Lib.csproj b/Lib/Lib.csproj
+index 6e190e3..2a44e75 100644
+--- a/Lib/Lib.csproj
++++ b/Lib/Lib.csproj
+@@ -1,7 +1,7 @@
+ ﻿<Project Sdk="Microsoft.NET.Sdk">
+ 
+     <PropertyGroup>
+-        <TargetFramework>net8.0</TargetFramework>
++        <TargetFramework>net10.0</TargetFramework>
+         <ImplicitUsings>enable</ImplicitUsings>
+         <Nullable>enable</Nullable>
+         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+@@ -24,8 +24,9 @@
+     </PropertyGroup>
+ 
+     <ItemGroup>
+-      <PackageReference Include="CUE4Parse" Version="1.1.1" />
+-      <PackageReference Include="CUE4Parse-Conversion" Version="1.1.1" />
++      <PackageReference Include="CUE4Parse" Version="1.2.2.202608" />
++      <PackageReference Include="CUE4Parse-Conversion" Version="1.2.2.202608" />
++      <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.4" />
+     </ItemGroup>
+ 
+     <ItemGroup>
+diff --git a/Lib/Readers/UDataTableReader.cs b/Lib/Readers/UDataTableReader.cs
+index 944f17d..996ce85 100644
+--- a/Lib/Readers/UDataTableReader.cs
++++ b/Lib/Readers/UDataTableReader.cs
+@@ -15,7 +15,7 @@ public class UDataTableReader
+ 
+     public async Task<UDataTable> ExtractAsync(string file)
+     {
+-        List<UObject> objects = (await _provider.LoadAllObjectsAsync(file)).ToList();
++        List<UObject> objects = (await _provider.LoadPackageAsync(file)).GetExports().ToList();
+         if (objects.Count == 0)
+         {
+             throw new InvalidOperationException($"Could not find pal table in asset {file}");
