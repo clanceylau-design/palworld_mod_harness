@@ -31,7 +31,7 @@ def run_version(executable: Path, arguments: list[str]) -> tuple[bool, str]:
     return completed.returncode == 0, first_line
 
 
-def locate_unreal_511(configured: str | None) -> Path | None:
+def locate_unreal_editor(configured: str | None) -> Path | None:
     candidates: list[Path] = []
     if configured:
         candidates.append(Path(configured))
@@ -43,6 +43,23 @@ def locate_unreal_511(configured: str | None) -> Path | None:
             ]
         )
     return next((candidate for candidate in candidates if candidate.is_file()), None)
+
+
+def unreal_version(executable: Path | None) -> dict[str, int] | None:
+    if executable is None:
+        return None
+    version_path = executable.parents[2] / "Build" / "Build.version"
+    if not version_path.is_file():
+        return None
+    try:
+        value = load_json(version_path)
+        return {
+            "major": int(value["MajorVersion"]),
+            "minor": int(value["MinorVersion"]),
+            "patch": int(value["PatchVersion"]),
+        }
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return None
 
 
 def main() -> int:
@@ -115,8 +132,47 @@ def main() -> int:
     addon_ready = (addon_root / "__init__.py").is_file()
     check(checks, "psk-psa-addon", "pass" if addon_ready else "block", "PSK/PSA add-on is installed in the managed Blender user root." if addon_ready else "Run configure_blender_addon.py.", path=str(addon_root))
 
-    unreal = locate_unreal_511(tools.get("unrealEditor"))
-    check(checks, "unreal-5.1.1", "pass" if unreal else "block", "Unreal Editor 5.1 installation was found." if unreal else "Unreal Engine 5.1.1 is not installed or configured.", executable=str(unreal) if unreal else None)
+    unreal = locate_unreal_editor(tools.get("unrealEditor"))
+    unreal_version_value = unreal_version(unreal)
+    allow_experimental_unreal = bool(tools.get("allowExperimentalUnrealEditor", False))
+    unreal_exact = unreal_version_value == {"major": 5, "minor": 1, "patch": 1}
+    unreal_usable = unreal is not None and unreal_version_value is not None and (
+        unreal_exact or allow_experimental_unreal
+    )
+    version_label = (
+        f"{unreal_version_value['major']}.{unreal_version_value['minor']}.{unreal_version_value['patch']}"
+        if unreal_version_value
+        else None
+    )
+    check(
+        checks,
+        "unreal-editor",
+        "pass" if unreal_usable else "block",
+        (
+            "Exact Unreal Editor 5.1.1 installation was found."
+            if unreal_exact
+            else "A non-matching Unreal Editor is explicitly enabled for experimental import/cook validation."
+            if unreal_usable
+            else "The configured Unreal Editor version could not be verified."
+            if unreal is not None
+            else "Unreal Editor 5.1.1 is not installed or configured."
+        ),
+        executable=str(unreal) if unreal else None,
+        version=version_label,
+        experimental=bool(unreal_usable and not unreal_exact),
+    )
+    check(
+        checks,
+        "palworld-cook-compatibility",
+        "pass" if unreal_exact else "warn",
+        (
+            "Editor version exactly matches Palworld's required UE 5.1.1 cook contract."
+            if unreal_exact
+            else "The configured editor does not match UE 5.1.1; its cooked SkeletalMesh compatibility with Palworld is unverified."
+        ),
+        required="5.1.1",
+        actual=version_label,
+    )
 
     mapping_value = tools.get("mappingFile")
     generated_mapping = game_root / "Pal" / "Binaries" / "Win64" / "Mappings.usmap"
@@ -262,7 +318,8 @@ def main() -> int:
         "phaseReadiness": {
             "registryPathScan": not any(name in blockers for name in ("palworld", "steam-manifest", "repak")),
             "modelEditing": not any(name in blockers for name in ("blender", "psk-psa-addon")),
-            "unrealBuild": "unreal-5.1.1" not in blockers,
+            "unrealBuild": unreal_usable,
+            "palworldCompatibleUnrealCook": unreal_exact,
             "gameplayMetadataExtraction": mapping_ready and extractor_ready and dotnet_ok,
             "deepAssetMetadataPrerequisites": mapping_ready and fmodel.is_file(),
             "deepAssetMetadata": mapping_ready and asset_metadata_ready,
@@ -273,7 +330,8 @@ def main() -> int:
             "skeletalMeshPreview": preview_ready,
             "constrainedMeshEditing": constrained_mesh_ready,
             "textureModPackaging": texture_packaging_ready,
-            "skeletalMeshModPackaging": unreal is not None and constrained_mesh_ready,
+            "skeletalMeshExperimentalImport": unreal_usable and constrained_mesh_ready,
+            "skeletalMeshModPackaging": False,
             "mappingDumpRuntime": ue4ss_ready,
         },
         "blockers": blockers,

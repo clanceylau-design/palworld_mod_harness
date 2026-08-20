@@ -146,6 +146,47 @@ python scripts/export_finalized_skeletal_mesh.py --config ../../../config/toolch
 
 不得用此流程创建功能性新肢体、多骨骼变形附件、新骨架、新动画或任意生成模型。刚性附件仍需 Unreal 重导入、材质绑定、动画与 Physics Asset 回归。
 
+## 实验性 Tripo 教师图表语义 UV
+
+当同骨架替换候选已经完成降面、绑定和几何冻结，但需要丢弃 Tripo 原 UV 坐标并重新参数化时，可运行：
+
+```powershell
+$blender = '<Blender 4.2 LTS blender.exe>'
+$args = @(
+  '--background'
+  '--python'
+  'scripts\blender_generate_semantic_uv.py'
+  '--'
+  '--input-blend'
+  '<已绑定且保留 Tripo UV 的 Blend>'
+  '--mesh'
+  '<目标网格对象名>'
+  '--output-dir'
+  '<本地输出目录>'
+  '--atlas-size'
+  '2048'
+  '--unwrap-strategy'
+  'teacher_charts'
+  '--face-density-scale'
+  '1.6'
+  '--pack-margin-pixels'
+  '12'
+)
+& $blender @args
+```
+
+该实验入口：
+
+- 以输入网格已有的 Tripo 连续图表拓扑作为教师，但不复用原 UV 坐标；
+- 按 PinkCat 骨骼主导区域和原 Base Color 的 cream/blue 大类记录语义；
+- 对教师图表重新执行 Angle Based 参数化，提高脸部 texel density，再全局打包；
+- 通过临时只读 `TripoSourceUV` 把 Base Color 和 ORM 烘到新 `SemanticUV`，随后删除临时 UV；
+- 验证 UV 哈希改变、几何和权重哈希不变、图表数量、图集利用率、拉伸、脸部密度、纹理转移误差，以及静止/合成压力三视图。
+
+不得把 `semantic_smart` 当作最终方案；实测即使按语义分区并把 Smart Project 角度提高到 89°，仍会生成大量碎岛。对拓扑完全不同的重拓扑网格，`teacher_charts` 也不能直接适用，必须先把教师图表/语义标签投射到低模，再生成新接缝。
+
+切线空间 Normal 不能像 Base Color 或 ORM 一样按颜色搬运。UV 改变后必须重新做高模到低模的切线 Normal 烘焙。在该步骤、最终 PSK/FBX 往返、真实动画以及 UE 5.1.1 运行回归完成前，输出只能标记为 Blender 实验候选。完整证据见 `docs/tripo-uv-regeneration-study.zh-CN.md`。
+
 ## 打包已支持的输出
 
 纯纹理候选通过预览后运行：
@@ -167,6 +208,6 @@ SkeletalMesh 打包仍依赖 UE 5.1.1 重导入和 Cook。不得把 PSK 直接�
 - 所有产物记录工具版本、游戏 build ID、输入/输出哈希和验证状态。
 - Blender 预览不等于 Unreal 或游戏内验证。
 
-当前已实现 Registry、SourceBundle、原 UV 候选、受限模型修改、附件 UV、模型匹配 PBR、Blender 预览、最终 PSK 往返验证、Unreal 导入 Bundle、Texture2D 注入和纹理 Pak。尚未实现 UE SkeletalMesh 重导入/Cook、模型 Pak、安装和运行回归。
+当前已实现 Registry、SourceBundle、原 UV 候选、受限模型修改、附件 UV、模型匹配 PBR、Tripo 教师图表语义 UV 实验、Blender 预览、最终 PSK 往返验证、Unreal 导入 Bundle、Texture2D 注入和纹理 Pak。尚未实现 SemanticUV 高低模切线 Normal 烘焙、Palworld 兼容的 UE 5.1.1 SkeletalMesh Cook、模型 Pak 安装和运行回归。
 
 规划后续阶段时阅读 [自然语言到 Mod 的交付方法](references/delivery-methodology.md)。方法文档是合同，不代表执行器已经实现。

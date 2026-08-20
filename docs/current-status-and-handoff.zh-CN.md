@@ -1,6 +1,6 @@
 # 当前进度与断点续作手册
 
-> 更新时间：2026-08-16
+> 更新时间：2026-08-20
 >
 > 当前工作分支：`main`
 >
@@ -40,7 +40,10 @@
 | 模型匹配 PBR | 已完成 | Base Color、AO、低模自烘焙 Normal、曲率近似、MRAO、Emissive Mask |
 | 最终 PSK | 已完成 | 5074 顶点、8652 面、39 骨骼/Socket、3 材质槽往返一致 |
 | Unreal 导入 Bundle | 已完成 | 路径、Skeleton、Physics Asset、材质槽、压缩和通道合同已固定 |
-| SkeletalMesh 重导入/Cook | 阻塞 | 缺少 Unreal Editor 5.1.1 |
+| Tripo 呆猫原生贴图模型 | 已完成候选 | 原生 UV/PBR 保留；29,999 面；已绑定 PinkCat 43 骨骼/Socket，Blender 压力测试通过 |
+| Tripo 从零语义 UV | Blender 实验通过 | 最终仅 `SemanticUV`；75 个图表；55.49% 图集占用；几何/权重哈希不变；Base Color/ORM 回烘及静止/合成压力三视图通过 |
+| UE 5.8 实验导入/Cook/Pak | 已完成但不兼容 | UE 5.8.1 导入和 Cook 均通过，V11 Pak 路径审计通过；UE5.1 解析器确认 Cooked SkeletalMesh 不兼容 |
+| Palworld 兼容 SkeletalMesh Cook | 阻塞 | 仍需 Unreal Editor 5.1.1 重新 Cook；UE 5.8 不能作为其替代版本 |
 | 游戏内动画/物理回归 | 未开始 | 依赖 Cook 后的可加载模型 Pak |
 
 ## 3. 当前可信产物
@@ -79,6 +82,23 @@ FinalizedSkeletalMeshInterchangeReport: pass
 UnrealModelImportManifest: blocked_editor_missing
 ```
 
+### 3.4 Tripo 呆猫替换 PinkCat（2026-08-20）
+
+- Tripo 原生模型：`artifacts/tripo-tests/build-24575825/PinkCat/blue-cat-mascot-v1/bailian-h3.1-standard-textured/blue-cat-bailian-tripo-h3.1-standard-textured-pbr.glb`
+- Blender 绑定报告：`artifacts/tripo-tests/build-24575825/PinkCat/blue-cat-mascot-v1/deploy-rig-v4/tripo-native-rig-report.json`
+- Tripo/V5 UV 量化目录：`artifacts/tripo-tests/build-24575825/PinkCat/blue-cat-mascot-v1/uv-comparison/`
+- 从零语义 UV 报告：`artifacts/tripo-tests/build-24575825/PinkCat/blue-cat-mascot-v1/semantic-uv-v6/semantic-uv-report.json`
+- 从零语义 UV Blend：`artifacts/tripo-tests/build-24575825/PinkCat/blue-cat-mascot-v1/semantic-uv-v6/BlueCat-TripoNative-SemanticUVV1.blend`
+- UE 5.8 实验项目：`artifacts/unreal-experimental/build-24575825/PinkCat/BlueCatMod58/BlueCatMod58.uproject`
+- UE 导入报告：`artifacts/unreal-experimental/build-24575825/PinkCat/BlueCatMod58/Saved/bluecat-import-report.json`
+- 实验 Pak：`artifacts/mod-packages/build-24575825/PinkCat/blue-cat-tripo-ue58-experimental-v1/BlueCat_PinkCat_UE58_Experimental_P.pak`
+- 总报告：`artifacts/mod-packages/build-24575825/PinkCat/blue-cat-tripo-ue58-experimental-v1/deployment-report.json`
+- UE5.1 兼容探针：`artifacts/mod-packages/build-24575825/PinkCat/blue-cat-tripo-ue58-experimental-v1/ue51-compatibility-probe.json`
+
+当前证据边界：Blender 绑定、UE 5.8 导入、UE 5.8 定向 Cook 和 Pak 结构已通过；UE5.1 解析器对该 Pak 返回 `Invalid FString length`，所以没有安装到游戏，也不能标记为运行时可用。
+
+从零语义 UV 的可复现脚本为 `skills/palworld-create-visual-mod/scripts/blender_generate_semantic_uv.py`，完整方法和失败对照见 `docs/tripo-uv-regeneration-study.zh-CN.md`。当前 `NormalGL` 未搬运，因为 UV 改变后原切线空间法线失效；必须重新做高模到低模的切线 Normal 烘焙。
+
 ## 4. 已确认的关键经验
 
 ### 4.1 任务必须先分流
@@ -108,13 +128,22 @@ UnrealModelImportManifest: blocked_editor_missing
 - Emissive Mask 来自机械装甲 Base Color 中的橙色能量区域。
 - 这些通道必须由未来 Unreal 材质按同一合同读取。
 
+### 4.3 Tripo UV 与重新展开
+
+- V5 的 25,000 面代理 UV 来自全模型 Smart UV Project，共 1,404 个图表，图集三角形面积合计只有 6.59%；碎岛是二维纹理难以理解语义边界的主要原因之一。
+- Tripo 原生高模约 69 个大图表，图集三角形面积合计 65.10%。其贴图优势还来自多视图、几何与纹理联合生成，不能只归因于 UV。
+- 将模型按语义区域分组后继续 Smart UV Project 仍产生 1,514 个图表，已实测否定。
+- 当前通过方案只学习 Tripo 的连续图表拓扑，丢弃其坐标，重新 Angle Based 参数化；随后提升脸部密度、全局打包，并把 Base Color/ORM 烘到新 UV。
+- 对拓扑完全不同的重拓扑网格，只能投射教师图表/语义标签并重新生成接缝，不能直接使用 Tripo UV 坐标。
+
 ## 5. 当前唯一硬阻塞
 
-`config/toolchain.local.json` 中的 `tools.unrealEditor` 仍为 `null`，因此：
+`config/toolchain.local.json` 已识别 UE 5.8.1 并允许实验使用，因此：
 
-- `doctor.py` 的 `unreal-5.1.1` 为 `block`；
-- Unreal 导入清单状态为 `blocked_editor_missing`；
-- 不能验证 SkeletalMesh 导入、Skeleton/Physics Asset 绑定、材质槽、Cook 或模型 Pak。
+- `doctor.py` 的 `unreal-editor` 为 `pass`，`unrealBuild=true`；
+- `palworld-cook-compatibility` 为 `warn`，`palworldCompatibleUnrealCook=false`；
+- UE 5.8 已实际完成 SkeletalMesh 导入、材质绑定、定向 Cook 和 Pak；
+- UE5.1 构建匹配解析器已证明 UE 5.8 Cooked SkeletalMesh 不能被当前 Palworld 资产格式读取。
 
 必须安装精确版本 Unreal Editor 5.1.1，并配置：
 
@@ -126,20 +155,22 @@ UnrealModelImportManifest: blocked_editor_missing
 
 ## 6. 同一工作站的下一步
 
-1. 配置 UE 5.1.1 路径。
-2. 运行：
+1. 为 SemanticUV 版本执行 Tripo 高模到 29,999 面低模的切线空间 Normal 重新烘焙；不得把原 `NormalGL` 当普通颜色图搬运。
+2. 重新导出 SemanticUV 版本 PSK/FBX，并复核 UV、几何、权重和骨骼往返一致。
+3. 在 Epic Games Launcher 安装 UE 5.1.1，并配置其路径；保留 UE 5.8 作为实验导入/诊断工具。
+4. 运行：
 
 ```powershell
 python skills\palworld-create-visual-mod\scripts\doctor.py --config config\toolchain.local.json
 ```
 
-3. 要求 `unreal-5.1.1` 和 `unrealBuild` 通过。
-4. 重新运行 `prepare_unreal_model_import.py`，要求清单状态从 `blocked_editor_missing` 变为 `ready_for_unreal_import`。
-5. 建立不可变 UE 5.1.1 Pal 模板项目和自动导入 Worker。
-6. 导入最终 PSK 与 PBR 纹理，复用原 Skeleton 和 Physics Asset，严格保持目标包路径与资产名。
-7. 验证 3 个材质槽的顺序：Body、Eye、MechanicalArmor。
-8. Cook 指定 Chunk，审计 Pak 路径。
-9. 安装到隔离测试环境，执行启动、日志、动画、穿模和 Physics Asset 回归。
+5. 要求 `unreal-editor`、`palworld-cook-compatibility` 和 `unrealBuild` 全部通过。
+6. 重新运行 `prepare_unreal_model_import.py`，要求清单状态从 `blocked_editor_missing` 变为 `ready_for_unreal_import`。
+7. 复制当前 `BlueCatMod58` 实验项目为不可变 UE 5.1.1 Pal 模板，并复用自动导入 Worker。
+8. 导入最终 PSK 与 PBR 纹理，复用原 Skeleton 和 Physics Asset，严格保持目标包路径与资产名。
+9. 验证目标对应的材质槽、纹理通道、Skeleton 和 Physics Asset。
+10. Cook 指定 Chunk，审计 Pak 路径。
+11. 安装到隔离测试环境，执行启动、日志、动画、穿模和 Physics Asset 回归。
 
 ## 7. 全新机器的恢复流程
 

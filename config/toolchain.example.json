@@ -13,6 +13,7 @@
     "pskPsaAddonSource": "D:\\PalworldModHarnessTools\\blender-addons",
     "ue4ssRoot": "F:\\SteamLibrary\\steamapps\\common\\Palworld\\Pal\\Binaries\\Win64\\ue4ss",
     "unrealEditor": null,
+    "allowExperimentalUnrealEditor": false,
     "mappingFile": "D:\\PalworldModHarnessTools\\mappings\\build-<steam-build-id>\\<mapping-file>.usmap",
     "dotnet": "D:\\PalworldModHarnessTools\\dotnet10\\dotnet.exe",
     "palworldDataExtractor": "D:\\PalworldModHarnessTools\\sources\\PalworldDataExtractor\\Cli\\bin\\Release\\net10.0\\PalworldDataExtractor.dll",

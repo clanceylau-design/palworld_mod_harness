@@ -49,6 +49,17 @@ def copy_artifact(source: Path, destination: Path) -> dict:
     return {"path": str(destination), "sha256": sha256(destination)}
 
 
+def read_editor_version(editor: Path) -> str | None:
+    version_path = editor.parents[2] / "Build" / "Build.version"
+    if not version_path.is_file():
+        return None
+    try:
+        value = json.loads(version_path.read_text(encoding="utf-8"))
+        return f"{int(value['MajorVersion'])}.{int(value['MinorVersion'])}.{int(value['PatchVersion'])}"
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+
 def main() -> int:
     args = parse_args()
     config_path = require_file(args.config, "toolchain config")
@@ -83,15 +94,32 @@ def main() -> int:
     asset_root = target["target"]["assetRoot"].replace("Pal/Content/", "/Game/")
     skeletal_name = Path(target["assets"]["primarySkeletalMesh"]).stem
     editor = config["tools"].get("unrealEditor")
-    editor_ready = bool(editor and Path(editor).is_file())
-    blockers = [] if editor_ready else ["Unreal Editor 5.1.1 is not configured in config/toolchain.local.json"]
+    editor_path = Path(editor) if editor else None
+    editor_version = read_editor_version(editor_path) if editor_path and editor_path.is_file() else None
+    exact_editor = editor_version == "5.1.1"
+    experimental_editor = bool(
+        editor_version is not None
+        and not exact_editor
+        and config["tools"].get("allowExperimentalUnrealEditor", False)
+    )
+    editor_ready = bool(editor_path and editor_path.is_file() and (exact_editor or experimental_editor))
+    blockers = [] if editor_ready else ["A permitted Unreal Editor is not configured in config/toolchain.local.json"]
+    status = (
+        "ready_for_unreal_import"
+        if exact_editor
+        else "ready_for_experimental_unreal_import"
+        if editor_ready
+        else "blocked_editor_missing"
+    )
     manifest = {
         "schemaVersion": 1,
         "artifactType": "UnrealModelImportManifest",
-        "status": "ready_for_unreal_import" if editor_ready else "blocked_editor_missing",
+        "status": status,
         "gameBuildId": target["gameBuildId"],
         "palId": target["target"]["palId"],
         "requiredEngine": "5.1.1",
+        "configuredEngine": editor_version,
+        "palworldCookCompatibilityVerified": exact_editor,
         "target": {
             "contentRoot": asset_root,
             "skeletalMeshName": skeletal_name,
