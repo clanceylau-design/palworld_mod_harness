@@ -722,6 +722,63 @@ runninghub_workflow
 
 如果 RunningHub 的同类工作流无法在质量或单次成本上接近 fal.ai TRELLIS，则保留本地 SPAR3D/TripoSR 作为零边际成本候选，并将阿里云百炼的 Tripo/HY-3D 作为质量升级选项，而不是转向缺少主体与授权证据的代充或中转服务。
 
+### 13.6 当前降级替代方案的成本目标
+
+当前 Provider 调研和 Harness 接入的首要目标，是找到一个单次成功生成“3D 模型 + 有效 UV + 可用基础纹理”的降级替代方案，并将单个合格候选的外部边际成本尽可能控制在 **人民币 0.50 元以下**。
+
+这里的“单次成功生成”不能只按 API 返回成功或存在 GLB 文件计算，至少需要满足：
+
+1. 输出可下载的 Mesh，能够被 Blender 无错误导入；
+2. 存在有效 UV Layer，UV 坐标有限且能驱动纹理采样；
+3. 同时输出或生成与该 UV 对应的 Base Color/基础纹理；
+4. 模型和纹理能够在统一预览器中绑定渲染，而不是只有供应商网页截图；
+5. 输出文件、参数、Seed、费用和 Hash 可记录并复现；
+6. 通过基础 Artifact Contract 后，才计为一个合格候选。
+
+成本使用“合格候选摊销成本”而不是供应商宣传单价：
+
+```text
+合格候选摊销成本
+= 为获得这些候选产生的全部生成费、失败任务扣费、纹理费、付费云 GPU 运行费和必要支付手续费
+/ 通过基础 Artifact Contract 的候选数量
+```
+
+本地已有硬件执行的 Blender 检查、Rigging、UE Import/Cook 和游戏验证不计入上述 `¥0.50` Provider 生成门槛，但必须在完整任务成本中单独记录；如果使用付费云 GPU 执行生成或纹理阶段，其实际运行费用必须计入。汇率换算应记录结算日、实际扣款金额和支付手续费，不能只用美元目录价估算。
+
+候选路线优先级调整为：
+
+```text
+P0  本地 SPAR3D/TripoSR + 本地确定性 UV/纹理投射
+    目标：外部边际成本接近 0，验证质量下限和自动化稳定性
+
+P1  RunningHub 托管开源 3D 工作流
+    目标：以人民币结算，实测合格候选摊销成本 < ¥0.50
+
+P2  fal.ai legacy TRELLIS
+    目标：在可合法获得 credits 时作为低价质量基准和回归锚点
+
+P3  Tripo/HY-3D/TRELLIS.2 等高价 Provider
+    定位：仅在低价路线连续失败或用户明确批准后升级，不作为默认 Golden Path
+```
+
+Provider Registry 应新增并强制记录以下成本字段：
+
+```json
+{
+  "currency": "CNY",
+  "listedCost": 0.0,
+  "actualDebitedCost": 0.0,
+  "paymentFee": 0.0,
+  "failedAttemptCost": 0.0,
+  "qualifiedCandidateCount": 0,
+  "amortizedQualifiedCost": 0.0,
+  "targetQualifiedCost": 0.5,
+  "meetsDegradedCostTarget": false
+}
+```
+
+`meetsDegradedCostTarget=true` 只表示成本目标达标，不代表资产已经完成同骨架绑定、UE Cook 或游戏运行验证。成本、几何/纹理质量和可部署性继续作为三条独立证据轴管理。
+
 ## 14. 参考资料
 
 - [Palworld Modding Docs：3D Asset Swapping](https://pwmodding.wiki/docs/developers/3d-modeling/asset-swapping/Home)
