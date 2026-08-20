@@ -645,7 +645,84 @@ Retry Cost
 
 已生成 UE 5.1.1 导入 Bundle，固定目标 SkeletalMesh、原 Skeleton、Physics Asset、材质槽、纹理压缩与 MRAO 通道合同。当前仍未完成高低模细节烘焙、UE 5.1.1 SkeletalMesh Reimport/Cook、动画与 Physics Asset 游戏内回归；直接阻塞是本机尚未配置 UE 5.1.1 Editor。因此整体状态为 `Blender model-matched PBR preview + finalized PSK ready`，不能标记为可部署模型 Mod。
 
-## 13. 参考资料
+## 13. fal.ai 境内采购与 Provider 替代调研（2026-08-20）
+
+### 13.1 调研结论
+
+截至 2026-08-20，未从 fal.ai 官方网站、文档、法律条款或公开合作伙伴页面中查到经过 fal.ai 明确认证的中国大陆 credits 代理商或经销商。市场上的“代充”“虚拟卡充值”和“API 中转”不能据此表述为 fal.ai 官方代理。
+
+fal.ai 官方当前采用美元预付 credits 模式，公开条款列出的自助支付方式为 payment card；ACH 主要适用于美国银行账户。官方没有公开列出支付宝、微信支付、人民币或中国银联直连通道。因此，能够在用户自有 fal.ai 账户中形成官方 credits 的可信路径仍是：
+
+1. 在 fal.ai Billing 使用本人或本企业合法持有、支持境外线上美元支付的银行卡；
+2. 申请 fal.ai 面向欧洲和亚洲团队开放的 Builder Grant 或 Startup Program；
+3. 对较大规模的企业需求直接联系 fal.ai Sales/Support，取得书面报价和账户安排。
+
+不把私人代充、共享账号、来源不明的虚拟卡或没有授权文件的中转站纳入 Golden Path。这些方案可能引入拒付、封号、余额不可追索、API Key 泄露和输入资产外泄风险。
+
+### 13.2 境内可用方案分级
+
+| 方案 | 是否获得 fal.ai 官方 credits | 当前证据等级 | Harness 决策 |
+|---|---:|---|---|
+| fal.ai 官方直充 | 是 | 官方计费与法律条款 | 保留为官方基准 Provider |
+| fal.ai Builder Grant / Startup Program | 是 | 官方申请页面，面向欧洲和亚洲团队 | 优先申请，用于基准和少量关键候选 |
+| RunningHub 国内平台 | 否 | 境内运营主体、用户协议、隐私政策、API 文档和人民币计费页面 | 作为独立境内 Provider 评估，不标记为 fal 代理 |
+| 阿里云百炼 | 否 | 国内云厂商官方模型市场、计费与 API 文档 | 继续作为 Tripo/HY-3D 类独立 Provider |
+| 国内 API 聚合中转站 | 否 | 多数只有自述，缺少上游授权、版本和 SLA 证据 | 默认不进入生产 Provider Registry |
+| 私人代充或共享账户 | 不确定 | 无法核验 | 禁止进入 Golden Path |
+
+### 13.3 RunningHub 的适用边界
+
+RunningHub 国内站公开的运营主体为安徽海马云智能科技发展有限公司，提供人民币钱包/RH 币、境内第三方支付、任务费用明细、API Key、模型 API、AI 应用 API 和 ComfyUI 工作流 API。其隐私政策说明境内运营数据存储于中国境内，并列出微信、支付宝等支付机构参与支付处理。
+
+因此 RunningHub 可作为“境内托管开源 3D 工作流/境内 3D Model API Provider”的候选，适合低成本批量候选生成和人民币结算。但它不是 fal.ai 代理；即使运行同名 TRELLIS 或兼容 ComfyUI 工作流，也不能假定其模型权重、版本、推理代码、参数、GPU、输出质量和 fal.ai `fal-ai/trellis` endpoint 相同。
+
+接入前必须使用同一输入集完成对照验证，并分别记录：
+
+```text
+provider / endpoint / workflowId
+model name / model version / node versions
+input hashes / seed / parameters
+estimated cost / actual cost / runtime
+output hash / format / polygon count / texture channels
+download retention / data retention
+geometry review / Blender import / skeleton binding / UE Cook / game runtime evidence
+```
+
+RunningHub 当前公开的 3D 能力包括混元图生 3D、Hitem3D，以及可运行的社区 3D ComfyUI 工作流。是否存在满足本项目要求、可稳定导出 GLB 的 TRELLIS 工作流，需要以实际复制到工作台、网页成功运行一次及 API round-trip 为准，不能只凭工作流标题判断。
+
+### 13.4 聚合中转站准入门槛
+
+调研中发现部分聚合站声称能够替代 fal.ai 或比 fal.ai 低价，但仅凭产品页中的“官方渠道”“99.9% SLA”“节省 70%”等自述，无法证明上游授权和交付稳定性。任何第三方 Provider 进入 Registry 前必须同时满足：
+
+1. 可核验的境内或境外运营主体、服务条款、隐私政策和客服渠道；
+2. 明确说明是否为 fal.ai 授权代理、API 转售、开源模型自托管或其他上游；
+3. 给出准确 endpoint、schema、模型版本、计费单位、失败扣费和退款规则；
+4. 支持独立 API Key、余额限额、调用账单、密钥轮换和任务追踪；
+5. 明确输入、输出、日志的存储地域、保存期限和删除机制；
+6. 使用非敏感样例通过小额充值、生成、下载、账单核对和故障恢复测试；
+7. 质量、成本和可用性通过 Harness 自有基准，不依赖供应商宣传结论。
+
+未满足以上条件时，Provider 状态只能是 `research_only`，不得承载私有参考图、未公开 IP 资产或生产任务。
+
+### 13.5 当前推荐的双 Provider 策略
+
+近期优先实现并比较两条独立链路：
+
+```text
+fal_trellis
+  官方 endpoint + 自有 fal key/官方赠送 credits
+  用途：质量与成本基准、关键候选复核
+
+runninghub_workflow
+  境内人民币结算 + 托管开源 3D 工作流
+  用途：低成本候选、Provider 可替换性和境内可用性验证
+```
+
+两条链路必须输出统一的 Provider Report，但 `provider_generated_unvalidated` 不能因为任务成功或 GLB 文件存在而晋升为“可部署 Mod”。后续仍需经过 Blender 几何检查、同骨架绑定、UE Import/Cook、游戏加载和截图/日志回归。
+
+如果 RunningHub 的同类工作流无法在质量或单次成本上接近 fal.ai TRELLIS，则保留本地 SPAR3D/TripoSR 作为零边际成本候选，并将阿里云百炼的 Tripo/HY-3D 作为质量升级选项，而不是转向缺少主体与授权证据的代充或中转服务。
+
+## 14. 参考资料
 
 - [Palworld Modding Docs：3D Asset Swapping](https://pwmodding.wiki/docs/developers/3d-modeling/asset-swapping/Home)
 - [Palworld Modding Docs：Exporting & Modifying 3D Assets](https://pwmodding.wiki/docs/developers/3d-modeling/asset-swapping/ExportingModifying3DAssets)
@@ -665,3 +742,15 @@ Retry Cost
 - [BlenderXAlpha-3DGenSkill](https://github.com/ig-shadow-walker/BlenderXAlpha-3DGenSkill)
 - [Unreal Engine Build Operations](https://dev.epicgames.com/documentation/unreal-engine/build-operations-cooking-packaging-deploying-and-running-projects-in-unreal-engine)
 - [Tripo AI For Mod](https://www.tripo3d.ai/mod)
+- [fal.ai Pricing](https://fal.ai/docs/documentation/model-apis/pricing)
+- [fal.ai Terms of Service](https://fal.ai/legal/terms-of-service)
+- [fal.ai Builder Grant](https://fal.ai/builder-grant)
+- [fal.ai Startup Program](https://fal.ai/startup-program)
+- [fal.ai TRELLIS API](https://fal.ai/docs/model-api-reference/3d-api/trellis)
+- [RunningHub 国内站](https://www.runninghub.cn/)
+- [RunningHub 用户协议](https://www.runninghub.cn/protocol)
+- [RunningHub 隐私政策](https://www.runninghub.cn/policy)
+- [RunningHub 付费协议](https://www.runninghub.cn/defray-protocol)
+- [RunningHub API 文档](https://www.runninghub.cn/runninghub-api-doc-cn/)
+- [RunningHub 模型 API 列表](https://www.runninghub.cn/call-api/search-api/standard-model)
+- [阿里云百炼 3D 模型生成](https://help.aliyun.com/zh/model-studio/3d-generation/)
